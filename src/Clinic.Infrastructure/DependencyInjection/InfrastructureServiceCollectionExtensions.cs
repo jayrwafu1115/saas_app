@@ -1,7 +1,10 @@
 using Clinic.Application.Common.Interfaces;
+using Clinic.Application.Locations;
+using Clinic.Application.Tenants;
 using Clinic.Domain.Users;
 using Clinic.Infrastructure.Identity;
 using Clinic.Infrastructure.Persistence;
+using Clinic.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +24,9 @@ public static class InfrastructureServiceCollectionExtensions
             options.UseNpgsql(connectionString));
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+        services.AddScoped<ITenantRepository, TenantRepository>();
+        services.AddScoped<ILocationRepository, LocationRepository>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         services
             .AddIdentityCore<ApplicationUser>(options =>
@@ -29,8 +35,9 @@ public static class InfrastructureServiceCollectionExtensions
                 options.Password.RequiredLength = 12;
                 options.Password.RequireNonAlphanumeric = true;
                 options.Lockout.MaxFailedAccessAttempts = 5;
+                options.SignIn.RequireConfirmedEmail = true;
             })
-            .AddRoles<IdentityRole<Guid>>()
+            .AddRoles<ApplicationRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>();
 
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();

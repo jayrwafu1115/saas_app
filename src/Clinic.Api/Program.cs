@@ -19,6 +19,8 @@ builder.Services
 
 var app = builder.Build();
 
+await app.Services.SeedIdentityAsync();
+
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
@@ -32,11 +34,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors(ApiCorsOptions.PolicyName);
+app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHealthChecks("/health").WithTags("Health");
 app.MapFoundationEndpoints();
+app.MapAuthEndpoints();
+app.MapRoleEndpoints();
+app.MapTenantEndpoints();
+app.MapLocationEndpoints();
 
 app.Run();
 

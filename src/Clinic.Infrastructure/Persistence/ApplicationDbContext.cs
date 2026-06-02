@@ -12,9 +12,14 @@ public sealed class ApplicationDbContext(
     DbContextOptions<ApplicationDbContext> options,
     IDateTimeProvider dateTimeProvider,
     ICurrentUser currentUser)
-    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IApplicationDbContext
+    : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>(options), IApplicationDbContext
 {
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<Location> Locations => Set<Location>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<ApplicationRolePermission> RolePermissions => Set<ApplicationRolePermission>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<UserActionToken> UserActionTokens => Set<UserActionToken>();
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

@@ -8,16 +8,20 @@ public sealed class Tenant : BaseEntity
     {
         Name = string.Empty;
         Slug = string.Empty;
+        Status = string.Empty;
+        SettingsJson = string.Empty;
     }
 
-    public Tenant(string name, string slug)
+    public Tenant(string name, string slug, string status, string settingsJson)
     {
-        Name = name;
-        Slug = slug;
-        IsActive = true;
+        Name = name.Trim();
+        Slug = slug.Trim().ToLowerInvariant();
+        Status = status.Trim();
+        SettingsJson = settingsJson;
     }
 
     public string Name { get; private set; }
     public string Slug { get; private set; }
-    public bool IsActive { get; private set; }
+    public string Status { get; private set; }
+    public string SettingsJson { get; private set; }
 }

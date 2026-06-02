@@ -19,6 +19,15 @@ public sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .HasMaxLength(120)
             .IsRequired();
 
+        builder.Property(tenant => tenant.Status)
+            .HasMaxLength(40)
+            .IsRequired();
+
+        builder.Property(tenant => tenant.SettingsJson)
+            .HasColumnType("jsonb")
+            .HasDefaultValue("{}")
+            .IsRequired();
+
         builder.HasIndex(tenant => tenant.Slug)
             .IsUnique();
 

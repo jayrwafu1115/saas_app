@@ -14,7 +14,10 @@ public static class ApiServiceCollectionExtensions
     public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentTenant, HeaderCurrentTenant>();
+        services.AddScoped<TenantContextService>();
+        services.AddScoped<ITenantContextService>(provider => provider.GetRequiredService<TenantContextService>());
+        services.AddScoped<ICurrentTenant>(provider => provider.GetRequiredService<TenantContextService>());
+        services.AddScoped<ITenantResolver, HeaderTenantResolver>();
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
@@ -65,7 +68,10 @@ public static class ApiServiceCollectionExtensions
                 };
             });
         services.AddAuthorizationBuilder()
-            .AddPolicy("SuperAdminOnly", policy => policy.RequireRole(ApplicationRoleNames.SuperAdmin));
+            .AddPolicy(AuthorizationPolicyNames.SuperAdminOnly, policy => policy.RequireRole(ApplicationRoleNames.SuperAdmin))
+            .AddPolicy(AuthorizationPolicyNames.ManageTenants, policy => policy.RequireClaim("permission", PermissionNames.ManageTenants))
+            .AddPolicy(AuthorizationPolicyNames.ManageLocations, policy => policy.RequireClaim("permission", PermissionNames.ManageLocations))
+            .AddPolicy(AuthorizationPolicyNames.ManageRoles, policy => policy.RequireClaim("permission", PermissionNames.ManageRoles));
 
         services.AddCors(options =>
         {
