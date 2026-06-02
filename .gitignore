@@ -1,0 +1,17 @@
+bin/
+obj/
+.vs/
+.idea/
+.vscode/
+TestResults/
+coverage/
+
+node_modules/
+.next/
+out/
+dist/
+
+.env
+.env.local
+*.user
+*.suo
