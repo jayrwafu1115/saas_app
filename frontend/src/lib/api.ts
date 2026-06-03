@@ -72,6 +72,63 @@ export type RegisterResponse = {
   emailVerificationToken: string;
 };
 
+export type Patient = {
+  id: string;
+  tenantId: string;
+  locationId: string;
+  medicalRecordNumber: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  birthDate: string;
+  gender: string;
+  email: string;
+  phone: string;
+  address: string;
+};
+
+export type PatientContact = {
+  id: string;
+  patientId: string;
+  name: string;
+  relationship: string;
+  email: string;
+  phone: string;
+  isPrimary: boolean;
+};
+
+export type PatientDocument = {
+  id: string;
+  patientId: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  objectKey: string;
+  uploadedAtUtc: string;
+};
+
+export type PatientDetail = Patient & {
+  contacts: PatientContact[];
+  documents: PatientDocument[];
+};
+
+export type PatientTimelineEvent = {
+  occurredAtUtc: string;
+  type: string;
+  title: string;
+  description: string;
+};
+
+export type PagedResult<T> = {
+  items: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+};
+
+export type PatientPayload = Omit<Patient, "id">;
+
 export async function getTenants() {
   const response = await api.get<Tenant[]>("/api/tenants");
   return response.data;
@@ -126,5 +183,55 @@ export async function resetPassword(payload: { email: string; token: string; new
 
 export async function getMe() {
   const response = await api.get<UserProfile>("/api/auth/me");
+  return response.data;
+}
+
+export async function searchPatients(params: {
+  search?: string;
+  tenantId?: string;
+  locationId?: string;
+  pageNumber?: number;
+  pageSize?: number;
+}) {
+  const response = await api.get<PagedResult<Patient>>("/api/patients", { params });
+  return response.data;
+}
+
+export async function getPatient(id: string) {
+  const response = await api.get<PatientDetail>(`/api/patients/${id}`);
+  return response.data;
+}
+
+export async function createPatient(payload: PatientPayload) {
+  const response = await api.post<Patient>("/api/patients", payload);
+  return response.data;
+}
+
+export async function updatePatient(id: string, payload: Omit<PatientPayload, "tenantId">) {
+  const response = await api.put<Patient>(`/api/patients/${id}`, payload);
+  return response.data;
+}
+
+export async function deletePatient(id: string) {
+  await api.delete(`/api/patients/${id}`);
+}
+
+export async function createPatientContact(
+  patientId: string,
+  payload: Omit<PatientContact, "id" | "patientId">,
+) {
+  const response = await api.post<PatientContact>(`/api/patients/${patientId}/contacts`, payload);
+  return response.data;
+}
+
+export async function uploadPatientDocument(patientId: string, file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await api.post<PatientDocument>(`/api/patients/${patientId}/documents`, form);
+  return response.data;
+}
+
+export async function getPatientTimeline(patientId: string) {
+  const response = await api.get<PatientTimelineEvent[]>(`/api/patients/${patientId}/timeline`);
   return response.data;
 }

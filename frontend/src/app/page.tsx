@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { Activity, Building2, Database, LogIn, MapPinned, Server, ShieldCheck } from "lucide-react";
+import { Activity, Building2, Database, LogIn, MapPinned, Server, ShieldCheck, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const foundationItems = [
   { label: "Tenant Registry", detail: "Tenant profile, slug, status, and settings", icon: Building2, href: "/tenants" },
   { label: "Location Directory", detail: "Clinic sites scoped by tenant context", icon: MapPinned, href: "/locations" },
+  { label: "Patient Management", detail: "Search, profiles, documents, and timeline", icon: UsersRound, href: "/patients" },
   { label: "Tenant Resolution", detail: "Header resolver and scoped tenant context", icon: ShieldCheck, href: "/locations" },
-  { label: "Data Platform", detail: "PostgreSQL, EF Core migrations, repositories", icon: Database, href: "/tenants" },
+  { label: "Data Platform", detail: "PostgreSQL, EF Core migrations, MinIO documents", icon: Database, href: "/patients" },
 ];
 
 export default function Home() {
@@ -34,6 +35,12 @@ export default function Home() {
             </Link>
             </Button>
             <Button variant="outline" asChild>
+              <Link href="/patients">
+                <UsersRound className="h-4 w-4" aria-hidden="true" />
+                Patients
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
               <Link href="/login">
                 <LogIn className="h-4 w-4" aria-hidden="true" />
                 Login
@@ -55,8 +62,8 @@ export default function Home() {
               Tenant and location operations are ready for business modules.
             </h2>
             <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-              Phase 2 adds the tenant registry, clinic location directory, scoped tenant context,
-              CQRS handlers, repositories, and the first management screens.
+              The platform now includes tenants, locations, authentication, authorization,
+              patient CRUD, document uploads, and patient timelines.
             </p>
           </div>
 
@@ -84,7 +91,7 @@ export default function Home() {
             </div>
           </div>
           <dl className="mt-4 grid gap-3 text-sm">
-            {["GET /api/tenants", "POST /api/tenants", "GET /api/locations", "POST /api/locations"].map(
+            {["GET /api/patients", "POST /api/patients", "POST /api/patients/{id}/documents", "GET /api/patients/{id}/timeline"].map(
               (endpoint) => (
                 <div key={endpoint} className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
                   <dt>{endpoint}</dt>

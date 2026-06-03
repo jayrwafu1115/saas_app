@@ -13,11 +13,11 @@ public static class IdentitySeedService
     private static readonly Dictionary<string, string[]> RolePermissions = new()
     {
         [ApplicationRoleNames.SuperAdmin] = PermissionNames.All,
-        [ApplicationRoleNames.ClinicOwner] = [PermissionNames.ManageLocations, PermissionNames.AccessClinicalWorkspace],
-        [ApplicationRoleNames.ClinicAdmin] = [PermissionNames.ManageLocations, PermissionNames.AccessClinicalWorkspace],
-        [ApplicationRoleNames.Doctor] = [PermissionNames.AccessClinicalWorkspace],
-        [ApplicationRoleNames.Nurse] = [PermissionNames.AccessClinicalWorkspace],
-        [ApplicationRoleNames.Receptionist] = [PermissionNames.ManageLocations, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.ClinicOwner] = [PermissionNames.ManageLocations, PermissionNames.ManagePatients, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.ClinicAdmin] = [PermissionNames.ManageLocations, PermissionNames.ManagePatients, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.Doctor] = [PermissionNames.ManagePatients, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.Nurse] = [PermissionNames.ManagePatients, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.Receptionist] = [PermissionNames.ManagePatients, PermissionNames.ManageLocations, PermissionNames.AccessClinicalWorkspace],
         [ApplicationRoleNames.Patient] = [PermissionNames.AccessPatientPortal]
     };
 
@@ -26,6 +26,7 @@ public static class IdentitySeedService
         [PermissionNames.ManageTenants] = "Manage tenant records.",
         [PermissionNames.ManageLocations] = "Manage clinic locations.",
         [PermissionNames.ManageRoles] = "Manage roles and user role assignments.",
+        [PermissionNames.ManagePatients] = "Manage patient records and documents.",
         [PermissionNames.AccessClinicalWorkspace] = "Access staff clinical workspace.",
         [PermissionNames.AccessPatientPortal] = "Access patient portal."
     };

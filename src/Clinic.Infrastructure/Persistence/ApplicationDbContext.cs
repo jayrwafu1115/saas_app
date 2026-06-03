@@ -1,5 +1,6 @@
 using Clinic.Application.Common.Interfaces;
 using Clinic.Domain.Common;
+using Clinic.Domain.Patients;
 using Clinic.Domain.Tenants;
 using Clinic.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -16,6 +17,9 @@ public sealed class ApplicationDbContext(
 {
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Location> Locations => Set<Location>();
+    public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<PatientContact> PatientContacts => Set<PatientContact>();
+    public DbSet<PatientDocument> PatientDocuments => Set<PatientDocument>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<ApplicationRolePermission> RolePermissions => Set<ApplicationRolePermission>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();

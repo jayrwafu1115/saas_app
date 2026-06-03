@@ -1,3 +1,4 @@
+using Clinic.Application.Common.Interfaces;
 using Clinic.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -31,6 +32,21 @@ internal sealed class ApiTestFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions>();
             services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
             services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase(_databaseName));
+            services.RemoveAll<IObjectStorageService>();
+            services.AddSingleton<IObjectStorageService, FakeObjectStorageService>();
         });
+    }
+
+    private sealed class FakeObjectStorageService : IObjectStorageService
+    {
+        public Task<StoredObject> UploadAsync(
+            string objectKey,
+            Stream content,
+            long contentLength,
+            string contentType,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new StoredObject(objectKey));
+        }
     }
 }
