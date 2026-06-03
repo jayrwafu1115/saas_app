@@ -158,6 +158,88 @@ export type AppointmentPayload = {
   notes?: string;
 };
 
+export type EncounterStatus = "Draft" | "Signed" | "Voided";
+
+export type Encounter = {
+  id: string;
+  tenantId: string;
+  locationId: string;
+  patientId: string;
+  clinicianUserId: string;
+  appointmentId?: string | null;
+  encounterDateUtc: string;
+  chiefComplaint: string;
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+  notes: string;
+  status: EncounterStatus;
+  signedAtUtc?: string | null;
+};
+
+export type Vital = {
+  id: string;
+  encounterId: string;
+  recordedAtUtc: string;
+  temperatureCelsius?: number | null;
+  systolicBloodPressure?: number | null;
+  diastolicBloodPressure?: number | null;
+  heartRate?: number | null;
+  respiratoryRate?: number | null;
+  oxygenSaturation?: number | null;
+  heightCm?: number | null;
+  weightKg?: number | null;
+  notes: string;
+};
+
+export type Diagnosis = {
+  id: string;
+  encounterId: string;
+  code: string;
+  description: string;
+  type: string;
+};
+
+export type Prescription = {
+  id: string;
+  encounterId: string;
+  medicationName: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions: string;
+};
+
+export type EncounterAuditLog = {
+  id: string;
+  encounterId: string;
+  occurredAtUtc: string;
+  action: string;
+  summary: string;
+  actorUserId: string;
+};
+
+export type EncounterDetail = Encounter & {
+  vitals: Vital[];
+  diagnoses: Diagnosis[];
+  prescriptions: Prescription[];
+  auditLogs: EncounterAuditLog[];
+};
+
+export type EncounterPayload = Omit<Encounter, "id" | "status" | "signedAtUtc">;
+
+export type VitalPayload = Omit<Vital, "id" | "encounterId">;
+export type DiagnosisPayload = Omit<Diagnosis, "id" | "encounterId">;
+export type PrescriptionPayload = Omit<Prescription, "id" | "encounterId">;
+
+export type EncounterTimelineEvent = {
+  occurredAtUtc: string;
+  type: string;
+  title: string;
+  description: string;
+};
+
 export async function getTenants() {
   const response = await api.get<Tenant[]>("/api/tenants");
   return response.data;
@@ -298,5 +380,63 @@ export async function checkInAppointment(id: string) {
 
 export async function checkOutAppointment(id: string) {
   const response = await api.post<Appointment>(`/api/appointments/${id}/check-out`);
+  return response.data;
+}
+
+export async function createEncounter(payload: EncounterPayload) {
+  const response = await api.post<Encounter>("/api/encounters", payload);
+  return response.data;
+}
+
+export async function getEncounter(id: string) {
+  const response = await api.get<EncounterDetail>(`/api/encounters/${id}`);
+  return response.data;
+}
+
+export async function updateEncounterSoap(id: string, payload: Omit<EncounterPayload, "tenantId" | "patientId" | "appointmentId">) {
+  const response = await api.put<Encounter>(`/api/encounters/${id}/soap`, payload);
+  return response.data;
+}
+
+export async function addEncounterVital(encounterId: string, payload: VitalPayload) {
+  const response = await api.post<Vital>(`/api/encounters/${encounterId}/vitals`, payload);
+  return response.data;
+}
+
+export async function addEncounterDiagnosis(encounterId: string, payload: DiagnosisPayload) {
+  const response = await api.post<Diagnosis>(`/api/encounters/${encounterId}/diagnoses`, payload);
+  return response.data;
+}
+
+export async function addEncounterPrescription(encounterId: string, payload: PrescriptionPayload) {
+  const response = await api.post<Prescription>(`/api/encounters/${encounterId}/prescriptions`, payload);
+  return response.data;
+}
+
+export async function signEncounter(id: string) {
+  const response = await api.post<Encounter>(`/api/encounters/${id}/sign`);
+  return response.data;
+}
+
+export async function getPatientEncounterTimeline(patientId: string) {
+  const response = await api.get<EncounterTimelineEvent[]>(`/api/encounters/patients/${patientId}/timeline`);
+  return response.data;
+}
+
+export function getEncounterPrintUrl(id: string) {
+  return `${api.defaults.baseURL}/api/encounters/${id}/print`;
+}
+
+export function getEncounterPdfUrl(id: string) {
+  return `${api.defaults.baseURL}/api/encounters/${id}/pdf`;
+}
+
+export async function getEncounterPrintHtml(id: string) {
+  const response = await api.get<string>(`/api/encounters/${id}/print`, { responseType: "text" });
+  return response.data;
+}
+
+export async function getEncounterPdf(id: string) {
+  const response = await api.get<Blob>(`/api/encounters/${id}/pdf`, { responseType: "blob" });
   return response.data;
 }

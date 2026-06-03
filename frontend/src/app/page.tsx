@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Building2, CalendarDays, Database, LogIn, MapPinned, Server, ShieldCheck, UsersRound } from "lucide-react";
+import { Activity, Building2, CalendarDays, ClipboardList, Database, LogIn, MapPinned, Server, ShieldCheck, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const foundationItems = [
@@ -7,6 +7,7 @@ const foundationItems = [
   { label: "Location Directory", detail: "Clinic sites scoped by tenant context", icon: MapPinned, href: "/locations" },
   { label: "Patient Management", detail: "Search, profiles, documents, and timeline", icon: UsersRound, href: "/patients" },
   { label: "Appointments", detail: "Daily, weekly, and monthly schedules", icon: CalendarDays, href: "/appointments" },
+  { label: "Clinical Encounters", detail: "SOAP notes, vitals, diagnoses, prescriptions", icon: ClipboardList, href: "/encounters" },
   { label: "Tenant Resolution", detail: "Header resolver and scoped tenant context", icon: ShieldCheck, href: "/locations" },
   { label: "Data Platform", detail: "PostgreSQL, EF Core migrations, MinIO documents", icon: Database, href: "/patients" },
 ];
@@ -48,6 +49,12 @@ export default function Home() {
               </Link>
             </Button>
             <Button variant="outline" asChild>
+              <Link href="/encounters">
+                <ClipboardList className="h-4 w-4" aria-hidden="true" />
+                Encounters
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
               <Link href="/login">
                 <LogIn className="h-4 w-4" aria-hidden="true" />
                 Login
@@ -70,7 +77,7 @@ export default function Home() {
             </h2>
             <p className="max-w-2xl text-base leading-7 text-muted-foreground">
               The platform now includes tenants, locations, authentication, authorization,
-              patient CRUD, document uploads, and patient timelines.
+              patient CRUD, document uploads, appointments, and clinical encounters.
             </p>
           </div>
 
@@ -98,7 +105,7 @@ export default function Home() {
             </div>
           </div>
           <dl className="mt-4 grid gap-3 text-sm">
-            {["GET /api/appointments/calendar", "POST /api/appointments", "POST /api/appointments/{id}/check-in", "POST /api/appointments/{id}/check-out"].map(
+            {["POST /api/encounters", "POST /api/encounters/{id}/vitals", "POST /api/encounters/{id}/diagnoses", "GET /api/encounters/{id}/pdf"].map(
               (endpoint) => (
                 <div key={endpoint} className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
                   <dt>{endpoint}</dt>

@@ -13,10 +13,10 @@ public static class IdentitySeedService
     private static readonly Dictionary<string, string[]> RolePermissions = new()
     {
         [ApplicationRoleNames.SuperAdmin] = PermissionNames.All,
-        [ApplicationRoleNames.ClinicOwner] = [PermissionNames.ManageLocations, PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.AccessClinicalWorkspace],
-        [ApplicationRoleNames.ClinicAdmin] = [PermissionNames.ManageLocations, PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.AccessClinicalWorkspace],
-        [ApplicationRoleNames.Doctor] = [PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.AccessClinicalWorkspace],
-        [ApplicationRoleNames.Nurse] = [PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.ClinicOwner] = [PermissionNames.ManageLocations, PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.ClinicAdmin] = [PermissionNames.ManageLocations, PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.Doctor] = [PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.Nurse] = [PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.AccessClinicalWorkspace],
         [ApplicationRoleNames.Receptionist] = [PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageLocations, PermissionNames.AccessClinicalWorkspace],
         [ApplicationRoleNames.Patient] = [PermissionNames.AccessPatientPortal]
     };
@@ -28,6 +28,7 @@ public static class IdentitySeedService
         [PermissionNames.ManageRoles] = "Manage roles and user role assignments.",
         [PermissionNames.ManagePatients] = "Manage patient records and documents.",
         [PermissionNames.ManageAppointments] = "Manage appointment scheduling and attendance.",
+        [PermissionNames.ManageEncounters] = "Manage clinical encounters, vitals, diagnoses, and prescriptions.",
         [PermissionNames.AccessClinicalWorkspace] = "Access staff clinical workspace.",
         [PermissionNames.AccessPatientPortal] = "Access patient portal."
     };

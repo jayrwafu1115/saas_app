@@ -46,6 +46,7 @@ app.MapTenantEndpoints();
 app.MapLocationEndpoints();
 app.MapPatientEndpoints();
 app.MapAppointmentEndpoints();
+app.MapEncounterEndpoints();
 
 app.Run();
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, FileUp, Loader2, Pencil, Plus, UserRound } from "lucide-react";
+import { ArrowLeft, ClipboardList, FileUp, Loader2, Pencil, Plus, UserRound } from "lucide-react";
 import { useParams } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,12 @@ export default function PatientProfilePage() {
               <h1 className="text-xl font-semibold">{patient ? `${patient.firstName} ${patient.lastName}` : "Loading"}</h1>
             </div>
             <Button className="ml-auto" variant="outline" asChild>
+              <Link href="/encounters">
+                <ClipboardList className="h-4 w-4" aria-hidden="true" />
+                Encounters
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
               <Link href={`/patients/${patientId}/edit`}>
                 <Pencil className="h-4 w-4" aria-hidden="true" />
                 Edit

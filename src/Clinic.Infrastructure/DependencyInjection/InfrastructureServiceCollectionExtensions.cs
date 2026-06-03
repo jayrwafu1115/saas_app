@@ -1,4 +1,5 @@
 using Clinic.Application.Appointments;
+using Clinic.Application.Clinical;
 using Clinic.Application.Common.Interfaces;
 using Clinic.Application.Locations;
 using Clinic.Application.Patients;
@@ -42,6 +43,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<ILocationRepository, LocationRepository>();
         services.AddScoped<IPatientRepository, PatientRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        services.AddScoped<IEncounterRepository, EncounterRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.Configure<MinioStorageOptions>(options =>
         {
