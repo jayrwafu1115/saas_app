@@ -1,4 +1,6 @@
 using Clinic.Application.Common.Interfaces;
+using Clinic.Application.AI;
+using Clinic.Infrastructure.AI;
 using Clinic.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -7,6 +9,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using StackExchange.Redis;
 
 namespace Clinic.Tests.Api;
 
@@ -22,7 +25,8 @@ internal sealed class ApiTestFactory : WebApplicationFactory<Program>
             {
                 ["SeedData:SuperAdmin:Email"] = "superadmin@test.local",
                 ["SeedData:SuperAdmin:Password"] = "SuperAdmin123!",
-                ["SeedData:SuperAdmin:DisplayName"] = "Super Admin"
+                ["SeedData:SuperAdmin:DisplayName"] = "Super Admin",
+                ["ConnectionStrings:Redis"] = string.Empty
             });
         });
 
@@ -34,6 +38,10 @@ internal sealed class ApiTestFactory : WebApplicationFactory<Program>
             services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase(_databaseName));
             services.RemoveAll<IObjectStorageService>();
             services.AddSingleton<IObjectStorageService, FakeObjectStorageService>();
+            services.RemoveAll<IConnectionMultiplexer>();
+            services.RemoveAll<IAIResponseCache>();
+            services.AddMemoryCache();
+            services.AddSingleton<IAIResponseCache, InMemoryAIResponseCache>();
         });
     }
 

@@ -1,4 +1,5 @@
 using FluentValidation;
+using Clinic.Application.AI;
 using Clinic.Application.Common.Behaviors;
 using Clinic.Application.Appointments;
 using MediatR;
@@ -16,6 +17,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddValidatorsFromAssembly(assembly);
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddScoped<IAvailabilityService, AvailabilityService>();
+        services.AddScoped<IAIService, AIService>();
 
         return services;
     }

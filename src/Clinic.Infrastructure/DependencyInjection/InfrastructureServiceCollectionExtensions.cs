@@ -1,10 +1,12 @@
 using Clinic.Application.Appointments;
+using Clinic.Application.AI;
 using Clinic.Application.Clinical;
 using Clinic.Application.Common.Interfaces;
 using Clinic.Application.Locations;
 using Clinic.Application.Patients;
 using Clinic.Application.Tenants;
 using Clinic.Domain.Users;
+using Clinic.Infrastructure.AI;
 using Clinic.Infrastructure.Identity;
 using Clinic.Infrastructure.Persistence;
 using Clinic.Infrastructure.Persistence.Repositories;
@@ -44,7 +46,17 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IPatientRepository, PatientRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddScoped<IEncounterRepository, EncounterRepository>();
+        services.AddScoped<IAIGenerationRepository, AIGenerationRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.Configure<AIProviderOptions>(configuration.GetSection(AIProviderOptions.SectionName));
+        services.AddHttpClient<OpenAIProvider>();
+        services.AddHttpClient<OllamaProvider>();
+        services.AddScoped<IAIProvider, OpenAIProvider>();
+        services.AddScoped<IAIProvider, OllamaProvider>();
+        services.AddScoped<IAIProviderFactory, AIProviderFactory>();
+        services.AddSingleton<IAIGenerationQueue, AIGenerationQueue>();
+        services.AddHostedService<AIGenerationWorker>();
+        services.AddMemoryCache();
         services.Configure<MinioStorageOptions>(options =>
         {
             var section = configuration.GetSection(MinioStorageOptions.SectionName);
@@ -77,6 +89,11 @@ public static class InfrastructureServiceCollectionExtensions
         if (!string.IsNullOrWhiteSpace(redisConnection))
         {
             services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnection));
+            services.AddSingleton<IAIResponseCache, RedisAIResponseCache>();
+        }
+        else
+        {
+            services.AddSingleton<IAIResponseCache, InMemoryAIResponseCache>();
         }
 
         return services;

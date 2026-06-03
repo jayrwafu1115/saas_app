@@ -1,3 +1,4 @@
+using Clinic.Domain.AI;
 using Clinic.Application.Common.Interfaces;
 using Clinic.Domain.Appointments;
 using Clinic.Domain.Clinical;
@@ -28,6 +29,7 @@ public sealed class ApplicationDbContext(
     public DbSet<Diagnosis> Diagnoses => Set<Diagnosis>();
     public DbSet<Prescription> Prescriptions => Set<Prescription>();
     public DbSet<EncounterAuditLog> EncounterAuditLogs => Set<EncounterAuditLog>();
+    public DbSet<AIGeneration> AIGenerations => Set<AIGeneration>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<ApplicationRolePermission> RolePermissions => Set<ApplicationRolePermission>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
