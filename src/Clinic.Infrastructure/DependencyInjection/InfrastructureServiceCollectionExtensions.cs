@@ -1,3 +1,4 @@
+using Clinic.Application.Appointments;
 using Clinic.Application.Common.Interfaces;
 using Clinic.Application.Locations;
 using Clinic.Application.Patients;
@@ -19,16 +20,28 @@ public static class InfrastructureServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is required.");
+        var useInMemoryDatabase = bool.TryParse(configuration["Database:UseInMemory"], out var parsedUseInMemory)
+            && parsedUseInMemory;
 
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(connectionString));
+        if (useInMemoryDatabase)
+        {
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseInMemoryDatabase(configuration["Database:Name"] ?? "clinic-saas-dev"));
+        }
+        else
+        {
+            var connectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is required.");
+
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseNpgsql(connectionString));
+        }
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<ILocationRepository, LocationRepository>();
         services.AddScoped<IPatientRepository, PatientRepository>();
+        services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.Configure<MinioStorageOptions>(options =>
         {

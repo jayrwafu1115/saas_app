@@ -1,5 +1,6 @@
 using FluentValidation;
 using Clinic.Application.Common.Behaviors;
+using Clinic.Application.Appointments;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +15,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddMediatR(configuration => configuration.RegisterServicesFromAssembly(assembly));
         services.AddValidatorsFromAssembly(assembly);
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddScoped<IAvailabilityService, AvailabilityService>();
 
         return services;
     }

@@ -129,6 +129,35 @@ export type PagedResult<T> = {
 
 export type PatientPayload = Omit<Patient, "id">;
 
+export type AppointmentStatus = "Scheduled" | "CheckedIn" | "CheckedOut" | "Cancelled";
+
+export type Appointment = {
+  id: string;
+  tenantId: string;
+  locationId: string;
+  patientId: string;
+  doctorUserId: string;
+  startsAtUtc: string;
+  endsAtUtc: string;
+  reason: string;
+  notes: string;
+  status: AppointmentStatus;
+  checkedInAtUtc?: string | null;
+  checkedOutAtUtc?: string | null;
+  cancelledAtUtc?: string | null;
+};
+
+export type AppointmentPayload = {
+  tenantId: string;
+  locationId: string;
+  patientId: string;
+  doctorUserId: string;
+  startsAtUtc: string;
+  endsAtUtc: string;
+  reason: string;
+  notes?: string;
+};
+
 export async function getTenants() {
   const response = await api.get<Tenant[]>("/api/tenants");
   return response.data;
@@ -233,5 +262,41 @@ export async function uploadPatientDocument(patientId: string, file: File) {
 
 export async function getPatientTimeline(patientId: string) {
   const response = await api.get<PatientTimelineEvent[]>(`/api/patients/${patientId}/timeline`);
+  return response.data;
+}
+
+export async function getAppointmentCalendar(params: {
+  tenantId?: string;
+  locationId?: string;
+  doctorUserId?: string;
+  view?: "daily" | "weekly" | "monthly";
+  date?: string;
+}) {
+  const response = await api.get<Appointment[]>("/api/appointments/calendar", { params });
+  return response.data;
+}
+
+export async function createAppointment(payload: AppointmentPayload) {
+  const response = await api.post<Appointment>("/api/appointments", payload);
+  return response.data;
+}
+
+export async function rescheduleAppointment(id: string, payload: Pick<AppointmentPayload, "locationId" | "doctorUserId" | "startsAtUtc" | "endsAtUtc">) {
+  const response = await api.post<Appointment>(`/api/appointments/${id}/reschedule`, payload);
+  return response.data;
+}
+
+export async function cancelAppointment(id: string) {
+  const response = await api.post<Appointment>(`/api/appointments/${id}/cancel`);
+  return response.data;
+}
+
+export async function checkInAppointment(id: string) {
+  const response = await api.post<Appointment>(`/api/appointments/${id}/check-in`);
+  return response.data;
+}
+
+export async function checkOutAppointment(id: string) {
+  const response = await api.post<Appointment>(`/api/appointments/${id}/check-out`);
   return response.data;
 }

@@ -1,4 +1,5 @@
 using Clinic.Application.Common.Interfaces;
+using Clinic.Domain.Appointments;
 using Clinic.Domain.Common;
 using Clinic.Domain.Patients;
 using Clinic.Domain.Tenants;
@@ -20,6 +21,7 @@ public sealed class ApplicationDbContext(
     public DbSet<Patient> Patients => Set<Patient>();
     public DbSet<PatientContact> PatientContacts => Set<PatientContact>();
     public DbSet<PatientDocument> PatientDocuments => Set<PatientDocument>();
+    public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<ApplicationRolePermission> RolePermissions => Set<ApplicationRolePermission>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
