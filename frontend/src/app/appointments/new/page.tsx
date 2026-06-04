@@ -9,11 +9,13 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import { Button } from "@/components/ui/button";
 import { createAppointment, getLocations, getTenants, searchPatients } from "@/lib/api";
 import { useAppStore } from "@/store/app-store";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function NewAppointmentPage() {
   const router = useRouter();
   const tenantId = useAppStore((state) => state.tenantId);
   const setTenantId = useAppStore((state) => state.setTenantId);
+  const user = useAuthStore((state) => state.user);
   const tenantsQuery = useQuery({ queryKey: ["tenants"], queryFn: getTenants });
   const locationsQuery = useQuery({ queryKey: ["locations", tenantId], queryFn: () => getLocations(tenantId), enabled: Boolean(tenantId) });
   const patientsQuery = useQuery({ queryKey: ["patients", tenantId], queryFn: () => searchPatients({ tenantId, pageSize: 100 }), enabled: Boolean(tenantId) });
@@ -32,6 +34,7 @@ export default function NewAppointmentPage() {
 
   const selectedLocationId = locationId || locationsQuery.data?.[0]?.id || "";
   const selectedPatientId = patientId || patientsQuery.data?.items[0]?.id || "";
+  const selectedDoctorUserId = doctorUserId || user?.id || "";
   const mutation = useMutation({
     mutationFn: createAppointment,
     onSuccess: () => router.push("/appointments"),
@@ -39,14 +42,14 @@ export default function NewAppointmentPage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!tenantId || !selectedLocationId || !selectedPatientId) return;
+    if (!tenantId || !selectedLocationId || !selectedPatientId || !isGuid(selectedDoctorUserId)) return;
     const startsAtUtc = new Date(`${date}T${startTime}:00Z`);
     const endsAtUtc = new Date(startsAtUtc.getTime() + Number(durationMinutes) * 60 * 1000);
     mutation.mutate({
       tenantId,
       locationId: selectedLocationId,
       patientId: selectedPatientId,
-      doctorUserId,
+      doctorUserId: selectedDoctorUserId,
       startsAtUtc: startsAtUtc.toISOString(),
       endsAtUtc: endsAtUtc.toISOString(),
       reason,
@@ -88,7 +91,7 @@ export default function NewAppointmentPage() {
               {patientsQuery.data?.items.map((patient) => <option key={patient.id} value={patient.id}>{patient.firstName} {patient.lastName}</option>)}
             </select>
           </label>
-          <Field label="Doctor User Id" value={doctorUserId} onChange={setDoctorUserId} />
+          <Field label="Doctor User Id" value={selectedDoctorUserId} onChange={setDoctorUserId} pattern={guidPattern} />
           <Field label="Date" value={date} onChange={setDate} type="date" />
           <Field label="Start Time" value={startTime} onChange={setStartTime} type="time" />
           <Field label="Duration Minutes" value={durationMinutes} onChange={setDurationMinutes} type="number" />
@@ -97,6 +100,9 @@ export default function NewAppointmentPage() {
             Notes
             <textarea className="min-h-24 rounded-md border border-border bg-surface px-3 py-2" value={notes} onChange={(event) => setNotes(event.target.value)} />
           </label>
+          {!isGuid(selectedDoctorUserId) ? (
+            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 sm:col-span-2">Doctor user ID must be a valid GUID.</p>
+          ) : null}
           {mutation.isError ? <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 sm:col-span-2">Appointment could not be saved.</p> : null}
           <Button className="sm:col-span-2" type="submit" disabled={mutation.isPending}>
             {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
@@ -108,16 +114,23 @@ export default function NewAppointmentPage() {
   );
 }
 
-function Field({ label, value, onChange, type = "text" }: {
+const guidPattern = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
+
+function isGuid(value: string) {
+  return new RegExp(guidPattern).test(value);
+}
+
+function Field({ label, value, onChange, type = "text", pattern }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  pattern?: string;
 }) {
   return (
     <label className="grid gap-2 text-sm font-medium">
       {label}
-      <input className="h-10 rounded-md border border-border bg-surface px-3" value={value} onChange={(event) => onChange(event.target.value)} type={type} required />
+      <input className="h-10 rounded-md border border-border bg-surface px-3" value={value} onChange={(event) => onChange(event.target.value)} type={type} pattern={pattern} required />
     </label>
   );
 }

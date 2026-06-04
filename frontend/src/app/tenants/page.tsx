@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { ArrowLeft, Building2, Loader2, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProtectedRoute } from "@/components/auth/protected-route";
@@ -83,7 +84,11 @@ export default function TenantManagementPage() {
               <textarea className="min-h-28 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm" value={settingsJson} onChange={(event) => setSettingsJson(event.target.value)} required />
             </label>
             {createTenantMutation.isError ? (
-              <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">Tenant could not be created.</p>
+              <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+                {createTenantMutation.error instanceof AxiosError && createTenantMutation.error.response?.status === 401
+                  ? "Your session expired. Please log in again."
+                  : "Tenant could not be created."}
+              </p>
             ) : null}
             <Button type="submit" disabled={createTenantMutation.isPending}>
               {createTenantMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}

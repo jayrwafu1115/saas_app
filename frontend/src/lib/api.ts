@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAuthStore } from "@/store/auth-store";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080",
@@ -17,6 +18,21 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401 && typeof window !== "undefined") {
+      useAuthStore.getState().clearAuth();
+      const returnTo = `${window.location.pathname}${window.location.search}`;
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.assign(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 export type Tenant = {
   id: string;
