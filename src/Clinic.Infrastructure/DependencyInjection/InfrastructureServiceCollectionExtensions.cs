@@ -1,15 +1,19 @@
 using Clinic.Application.Appointments;
 using Clinic.Application.AI;
+using Clinic.Application.Billing;
 using Clinic.Application.Clinical;
 using Clinic.Application.Common.Interfaces;
 using Clinic.Application.Locations;
 using Clinic.Application.Patients;
+using Clinic.Application.Reporting;
 using Clinic.Application.Tenants;
 using Clinic.Domain.Users;
 using Clinic.Infrastructure.AI;
+using Clinic.Infrastructure.Billing;
 using Clinic.Infrastructure.Identity;
 using Clinic.Infrastructure.Persistence;
 using Clinic.Infrastructure.Persistence.Repositories;
+using Clinic.Infrastructure.Reporting;
 using Clinic.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -47,7 +51,14 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddScoped<IEncounterRepository, EncounterRepository>();
         services.AddScoped<IAIGenerationRepository, AIGenerationRepository>();
+        services.AddScoped<IReportingRepository, ReportingRepository>();
+        services.AddScoped<IBillingRepository, BillingRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.Configure<PhilippinesBillingOptions>(configuration.GetSection(PhilippinesBillingOptions.SectionName));
+        services.AddScoped<IBillingProvider, GCashBillingProvider>();
+        services.AddScoped<IBillingProvider, MayaBillingProvider>();
+        services.AddScoped<IBillingProviderFactory, BillingProviderFactory>();
+        services.Configure<ReportingOptions>(configuration.GetSection(ReportingOptions.SectionName));
         services.Configure<AIProviderOptions>(configuration.GetSection(AIProviderOptions.SectionName));
         services.AddHttpClient<OpenAIProvider>();
         services.AddHttpClient<OllamaProvider>();
@@ -90,10 +101,12 @@ public static class InfrastructureServiceCollectionExtensions
         {
             services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnection));
             services.AddSingleton<IAIResponseCache, RedisAIResponseCache>();
+            services.AddSingleton<IReportingCache, RedisReportingCache>();
         }
         else
         {
             services.AddSingleton<IAIResponseCache, InMemoryAIResponseCache>();
+            services.AddSingleton<IReportingCache, InMemoryReportingCache>();
         }
 
         return services;

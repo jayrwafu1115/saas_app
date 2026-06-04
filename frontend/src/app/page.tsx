@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Building2, CalendarDays, ClipboardList, Database, LogIn, MapPinned, Server, ShieldCheck, UsersRound } from "lucide-react";
+import { Activity, BarChart3, Building2, CalendarDays, ClipboardList, CreditCard, Database, LogIn, MapPinned, Server, ShieldCheck, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const foundationItems = [
@@ -8,6 +8,8 @@ const foundationItems = [
   { label: "Patient Management", detail: "Search, profiles, documents, and timeline", icon: UsersRound, href: "/patients" },
   { label: "Appointments", detail: "Daily, weekly, and monthly schedules", icon: CalendarDays, href: "/appointments" },
   { label: "Clinical Encounters", detail: "SOAP notes, vitals, diagnoses, prescriptions", icon: ClipboardList, href: "/encounters" },
+  { label: "Reporting", detail: "KPIs, analytics, Excel, and PDF exports", icon: BarChart3, href: "/reports" },
+  { label: "Subscription Billing", detail: "Plans, trials, usage limits, GCash and Maya", icon: CreditCard, href: "/billing" },
   { label: "Tenant Resolution", detail: "Header resolver and scoped tenant context", icon: ShieldCheck, href: "/locations" },
   { label: "Data Platform", detail: "PostgreSQL, EF Core migrations, MinIO documents", icon: Database, href: "/patients" },
 ];
@@ -52,6 +54,18 @@ export default function Home() {
               <Link href="/encounters">
                 <ClipboardList className="h-4 w-4" aria-hidden="true" />
                 Encounters
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/reports">
+                <BarChart3 className="h-4 w-4" aria-hidden="true" />
+                Reports
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/billing">
+                <CreditCard className="h-4 w-4" aria-hidden="true" />
+                Billing
               </Link>
             </Button>
             <Button variant="outline" asChild>
@@ -105,7 +119,7 @@ export default function Home() {
             </div>
           </div>
           <dl className="mt-4 grid gap-3 text-sm">
-            {["POST /api/encounters", "POST /api/encounters/{id}/vitals", "POST /api/encounters/{id}/diagnoses", "GET /api/encounters/{id}/pdf"].map(
+            {["GET /api/reports/dashboard", "GET /api/reports/charts", "GET /api/reports/export/excel", "GET /api/reports/export/pdf"].map(
               (endpoint) => (
                 <div key={endpoint} className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
                   <dt>{endpoint}</dt>

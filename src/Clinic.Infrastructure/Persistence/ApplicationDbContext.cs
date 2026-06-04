@@ -1,6 +1,7 @@
 using Clinic.Domain.AI;
 using Clinic.Application.Common.Interfaces;
 using Clinic.Domain.Appointments;
+using Clinic.Domain.Billing;
 using Clinic.Domain.Clinical;
 using Clinic.Domain.Common;
 using Clinic.Domain.Patients;
@@ -30,6 +31,10 @@ public sealed class ApplicationDbContext(
     public DbSet<Prescription> Prescriptions => Set<Prescription>();
     public DbSet<EncounterAuditLog> EncounterAuditLogs => Set<EncounterAuditLog>();
     public DbSet<AIGeneration> AIGenerations => Set<AIGeneration>();
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<TenantSubscription> TenantSubscriptions => Set<TenantSubscription>();
+    public DbSet<SubscriptionUsage> SubscriptionUsages => Set<SubscriptionUsage>();
+    public DbSet<BillingPayment> BillingPayments => Set<BillingPayment>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<ApplicationRolePermission> RolePermissions => Set<ApplicationRolePermission>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();

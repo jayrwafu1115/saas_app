@@ -9,6 +9,8 @@ public static class PermissionNames
     public const string ManageAppointments = "appointments.manage";
     public const string ManageEncounters = "encounters.manage";
     public const string ManageAI = "ai.manage";
+    public const string ViewReports = "reports.view";
+    public const string ManageBilling = "billing.manage";
     public const string AccessClinicalWorkspace = "clinical.access";
     public const string AccessPatientPortal = "patient.access";
 
@@ -21,6 +23,8 @@ public static class PermissionNames
         ManageAppointments,
         ManageEncounters,
         ManageAI,
+        ViewReports,
+        ManageBilling,
         AccessClinicalWorkspace,
         AccessPatientPortal
     ];

@@ -10,4 +10,6 @@ public static class AuthorizationPolicyNames
     public const string ManageAppointments = "ManageAppointments";
     public const string ManageEncounters = "ManageEncounters";
     public const string ManageAI = "ManageAI";
+    public const string ViewReports = "ViewReports";
+    public const string ManageBilling = "ManageBilling";
 }

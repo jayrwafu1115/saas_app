@@ -48,6 +48,8 @@ app.MapPatientEndpoints();
 app.MapAppointmentEndpoints();
 app.MapEncounterEndpoints();
 app.MapAIEndpoints();
+app.MapReportingEndpoints();
+app.MapBillingEndpoints();
 
 app.Run();
 

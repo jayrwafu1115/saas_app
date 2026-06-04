@@ -75,7 +75,9 @@ public static class ApiServiceCollectionExtensions
             .AddPolicy(AuthorizationPolicyNames.ManagePatients, policy => policy.RequireClaim("permission", PermissionNames.ManagePatients))
             .AddPolicy(AuthorizationPolicyNames.ManageAppointments, policy => policy.RequireClaim("permission", PermissionNames.ManageAppointments))
             .AddPolicy(AuthorizationPolicyNames.ManageEncounters, policy => policy.RequireClaim("permission", PermissionNames.ManageEncounters))
-            .AddPolicy(AuthorizationPolicyNames.ManageAI, policy => policy.RequireClaim("permission", PermissionNames.ManageAI));
+            .AddPolicy(AuthorizationPolicyNames.ManageAI, policy => policy.RequireClaim("permission", PermissionNames.ManageAI))
+            .AddPolicy(AuthorizationPolicyNames.ViewReports, policy => policy.RequireClaim("permission", PermissionNames.ViewReports))
+            .AddPolicy(AuthorizationPolicyNames.ManageBilling, policy => policy.RequireClaim("permission", PermissionNames.ManageBilling));
 
         services.AddCors(options =>
         {

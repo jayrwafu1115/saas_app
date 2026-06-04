@@ -1,4 +1,5 @@
 using Clinic.Application.Common.Security;
+using Clinic.Domain.Billing;
 using Clinic.Domain.Users;
 using Clinic.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -13,10 +14,10 @@ public static class IdentitySeedService
     private static readonly Dictionary<string, string[]> RolePermissions = new()
     {
         [ApplicationRoleNames.SuperAdmin] = PermissionNames.All,
-        [ApplicationRoleNames.ClinicOwner] = [PermissionNames.ManageLocations, PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.ManageAI, PermissionNames.AccessClinicalWorkspace],
-        [ApplicationRoleNames.ClinicAdmin] = [PermissionNames.ManageLocations, PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.ManageAI, PermissionNames.AccessClinicalWorkspace],
-        [ApplicationRoleNames.Doctor] = [PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.ManageAI, PermissionNames.AccessClinicalWorkspace],
-        [ApplicationRoleNames.Nurse] = [PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.ManageAI, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.ClinicOwner] = [PermissionNames.ManageLocations, PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.ManageAI, PermissionNames.ViewReports, PermissionNames.ManageBilling, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.ClinicAdmin] = [PermissionNames.ManageLocations, PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.ManageAI, PermissionNames.ViewReports, PermissionNames.ManageBilling, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.Doctor] = [PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.ManageAI, PermissionNames.ViewReports, PermissionNames.AccessClinicalWorkspace],
+        [ApplicationRoleNames.Nurse] = [PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageEncounters, PermissionNames.ManageAI, PermissionNames.ViewReports, PermissionNames.AccessClinicalWorkspace],
         [ApplicationRoleNames.Receptionist] = [PermissionNames.ManagePatients, PermissionNames.ManageAppointments, PermissionNames.ManageLocations, PermissionNames.AccessClinicalWorkspace],
         [ApplicationRoleNames.Patient] = [PermissionNames.AccessPatientPortal]
     };
@@ -30,6 +31,8 @@ public static class IdentitySeedService
         [PermissionNames.ManageAppointments] = "Manage appointment scheduling and attendance.",
         [PermissionNames.ManageEncounters] = "Manage clinical encounters, vitals, diagnoses, and prescriptions.",
         [PermissionNames.ManageAI] = "Generate, inspect, and track clinical AI outputs.",
+        [PermissionNames.ViewReports] = "View dashboards, analytics, and reporting exports.",
+        [PermissionNames.ManageBilling] = "Manage subscriptions, billing providers, usage, and tenant restrictions.",
         [PermissionNames.AccessClinicalWorkspace] = "Access staff clinical workspace.",
         [PermissionNames.AccessPatientPortal] = "Access patient portal."
     };
@@ -91,6 +94,7 @@ public static class IdentitySeedService
         }
 
         await dbContext.SaveChangesAsync();
+        await SeedPlansAsync(dbContext);
 
         var seedSection = configuration.GetSection(IdentitySeedOptions.SectionName);
         var seedOptions = new IdentitySeedOptions
@@ -127,5 +131,25 @@ public static class IdentitySeedService
         {
             await userManager.AddToRoleAsync(user, ApplicationRoleNames.SuperAdmin);
         }
+    }
+
+    private static async Task SeedPlansAsync(Persistence.ApplicationDbContext dbContext)
+    {
+        var plans = new[]
+        {
+            new SubscriptionPlan("Starter", "starter", 1499m, 5, 1, 1, 500, 14, "{\"features\":[\"patient-management\",\"appointments\",\"basic-reports\"]}"),
+            new SubscriptionPlan("Professional", "professional", 4999m, 25, 8, 3, 5000, 14, "{\"features\":[\"patient-management\",\"appointments\",\"encounters\",\"ai\",\"reports\"]}"),
+            new SubscriptionPlan("Enterprise", "enterprise", 14999m, 250, 100, 25, 100000, 30, "{\"features\":[\"all-modules\",\"priority-support\",\"advanced-analytics\"]}")
+        };
+
+        foreach (var plan in plans)
+        {
+            if (!await dbContext.SubscriptionPlans.AnyAsync(existing => existing.Code == plan.Code))
+            {
+                dbContext.SubscriptionPlans.Add(plan);
+            }
+        }
+
+        await dbContext.SaveChangesAsync();
     }
 }

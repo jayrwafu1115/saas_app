@@ -1,7 +1,9 @@
 using Clinic.Application.Common.Interfaces;
 using Clinic.Application.AI;
+using Clinic.Application.Reporting;
 using Clinic.Infrastructure.AI;
 using Clinic.Infrastructure.Persistence;
+using Clinic.Infrastructure.Reporting;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -40,8 +42,10 @@ internal sealed class ApiTestFactory : WebApplicationFactory<Program>
             services.AddSingleton<IObjectStorageService, FakeObjectStorageService>();
             services.RemoveAll<IConnectionMultiplexer>();
             services.RemoveAll<IAIResponseCache>();
+            services.RemoveAll<IReportingCache>();
             services.AddMemoryCache();
             services.AddSingleton<IAIResponseCache, InMemoryAIResponseCache>();
+            services.AddSingleton<IReportingCache, InMemoryReportingCache>();
         });
     }
 

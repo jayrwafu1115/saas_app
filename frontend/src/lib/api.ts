@@ -240,6 +240,77 @@ export type EncounterTimelineEvent = {
   description: string;
 };
 
+export type DashboardKpis = {
+  totalPatients: number;
+  newPatients: number;
+  appointments: number;
+  revenue: number;
+  activeDoctors: number;
+};
+
+export type DailyVisit = { date: string; visits: number };
+export type MonthlyRevenue = { year: number; month: number; revenue: number };
+export type DoctorPerformance = { doctorUserId: string; appointments: number; completedVisits: number; revenue: number };
+export type LocationPerformance = { locationId: string; locationName: string; appointments: number; completedVisits: number; revenue: number };
+
+export type ReportingCharts = {
+  dailyVisits: DailyVisit[];
+  monthlyRevenue: MonthlyRevenue[];
+  doctorPerformance: DoctorPerformance[];
+  locationPerformance: LocationPerformance[];
+};
+
+export type ReportingDashboard = {
+  kpis: DashboardKpis;
+  charts: ReportingCharts;
+};
+
+export type SubscriptionPlan = {
+  id: string;
+  name: string;
+  code: string;
+  monthlyPricePhp: number;
+  maxUsers: number;
+  maxDoctors: number;
+  maxLocations: number;
+  maxPatients: number;
+  trialDays: number;
+  featuresJson: string;
+};
+
+export type TenantSubscription = {
+  id: string;
+  tenantId: string;
+  planId: string;
+  planName: string;
+  status: string;
+  trialEndsAtUtc: string;
+  currentPeriodEndUtc: string;
+  isRestricted: boolean;
+};
+
+export type SubscriptionUsage = {
+  tenantId: string;
+  metric: string;
+  quantity: number;
+  limit: number;
+  period: string;
+  isOverLimit: boolean;
+};
+
+export type BillingOverview = {
+  subscriptions: TenantSubscription[];
+  usage: SubscriptionUsage[];
+};
+
+export type BillingCheckout = {
+  paymentId: string;
+  provider: "GCash" | "Maya";
+  amountPhp: number;
+  checkoutUrl: string;
+  providerReference: string;
+};
+
 export async function getTenants() {
   const response = await api.get<Tenant[]>("/api/tenants");
   return response.data;
@@ -438,5 +509,45 @@ export async function getEncounterPrintHtml(id: string) {
 
 export async function getEncounterPdf(id: string) {
   const response = await api.get<Blob>(`/api/encounters/${id}/pdf`, { responseType: "blob" });
+  return response.data;
+}
+
+export async function getReportingDashboard(params: { tenantId?: string; from?: string; to?: string }) {
+  const response = await api.get<ReportingDashboard>("/api/reports/dashboard", { params });
+  return response.data;
+}
+
+export async function getReportingCharts(params: { tenantId?: string; from?: string; to?: string }) {
+  const response = await api.get<ReportingCharts>("/api/reports/charts", { params });
+  return response.data;
+}
+
+export async function getReportExcel(params: { tenantId?: string; from?: string; to?: string }) {
+  const response = await api.get<Blob>("/api/reports/export/excel", { params, responseType: "blob" });
+  return response.data;
+}
+
+export async function getReportPdf(params: { tenantId?: string; from?: string; to?: string }) {
+  const response = await api.get<Blob>("/api/reports/export/pdf", { params, responseType: "blob" });
+  return response.data;
+}
+
+export async function getSubscriptionPlans() {
+  const response = await api.get<SubscriptionPlan[]>("/api/billing/plans");
+  return response.data;
+}
+
+export async function startSubscriptionTrial(payload: { tenantId: string; planCode: string }) {
+  const response = await api.post<TenantSubscription>("/api/billing/trial", payload);
+  return response.data;
+}
+
+export async function createBillingCheckout(payload: { tenantId: string; planCode: string; provider: "GCash" | "Maya" }) {
+  const response = await api.post<BillingCheckout>("/api/billing/checkout", payload);
+  return response.data;
+}
+
+export async function getBillingOverview(tenantId?: string) {
+  const response = await api.get<BillingOverview>("/api/billing/overview", { params: { tenantId } });
   return response.data;
 }

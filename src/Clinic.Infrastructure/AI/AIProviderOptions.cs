@@ -19,6 +19,7 @@ public sealed class OpenAIOptions
 
 public sealed class OllamaOptions
 {
+    public string ApiKey { get; set; } = string.Empty;
     public string Endpoint { get; set; } = "http://localhost:11434/api/generate";
     public string Model { get; set; } = "llama3.1";
 }

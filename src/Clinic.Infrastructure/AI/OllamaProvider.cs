@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Clinic.Application.AI;
@@ -13,10 +14,18 @@ public sealed class OllamaProvider(HttpClient httpClient, IOptions<AIProviderOpt
     public async Task<AIProviderResponse> GenerateAsync(AIGenerationType type, string prompt, string? model, CancellationToken cancellationToken)
     {
         var ollama = options.Value.Ollama;
-        using var response = await httpClient.PostAsJsonAsync(ollama.Endpoint, new OllamaRequest(
+        using var request = new HttpRequestMessage(HttpMethod.Post, ollama.Endpoint);
+        if (!string.IsNullOrWhiteSpace(ollama.ApiKey))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ollama.ApiKey);
+        }
+
+        request.Content = JsonContent.Create(new OllamaRequest(
             string.IsNullOrWhiteSpace(model) ? ollama.Model : model,
             prompt,
-            false), cancellationToken);
+            false));
+
+        using var response = await httpClient.SendAsync(request, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
