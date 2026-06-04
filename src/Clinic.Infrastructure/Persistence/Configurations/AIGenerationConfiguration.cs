@@ -22,6 +22,7 @@ public sealed class AIGenerationConfiguration : IEntityTypeConfiguration<AIGener
         builder.Property(generation => generation.CostUsd).HasPrecision(18, 6);
         builder.HasQueryFilter(generation => !generation.IsDeleted);
         builder.HasIndex(generation => new { generation.TenantId, generation.EncounterId, generation.CreatedAtUtc });
+        builder.HasIndex(generation => new { generation.TenantId, generation.Status, generation.CreatedAtUtc });
         builder.HasIndex(generation => new { generation.Provider, generation.Type, generation.PromptHash });
     }
 }

@@ -40,6 +40,7 @@ public sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appointm
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(appointment => new { appointment.TenantId, appointment.StartsAtUtc });
+        builder.HasIndex(appointment => new { appointment.TenantId, appointment.Status, appointment.StartsAtUtc });
         builder.HasIndex(appointment => new { appointment.DoctorUserId, appointment.StartsAtUtc, appointment.EndsAtUtc });
         builder.HasIndex(appointment => new { appointment.LocationId, appointment.StartsAtUtc, appointment.EndsAtUtc });
         builder.HasQueryFilter(appointment => !appointment.IsDeleted);

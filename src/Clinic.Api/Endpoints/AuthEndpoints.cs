@@ -5,6 +5,7 @@ using Clinic.Domain.Users;
 using Clinic.Infrastructure.Identity;
 using Clinic.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -14,7 +15,9 @@ public static class AuthEndpoints
 {
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/auth").WithTags("Authentication");
+        var group = app.MapGroup("/api/auth")
+            .WithTags("Authentication")
+            .RequireRateLimiting("auth");
 
         group.MapPost("/register", RegisterAsync)
             .WithName("Register")
@@ -51,6 +54,23 @@ public static class AuthEndpoints
             .WithName("Logout")
             .Produces(StatusCodes.Status200OK);
 
+        group.MapPost("/mfa/setup", SetupMfaAsync)
+            .RequireAuthorization()
+            .WithName("SetupMfa")
+            .Produces<MfaSetupResponse>()
+            .Produces(StatusCodes.Status401Unauthorized);
+
+        group.MapPost("/mfa/enable", EnableMfaAsync)
+            .RequireAuthorization()
+            .WithName("EnableMfa")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest);
+
+        group.MapPost("/mfa/disable", DisableMfaAsync)
+            .RequireAuthorization()
+            .WithName("DisableMfa")
+            .Produces(StatusCodes.Status200OK);
+
         group.MapGet("/me", MeAsync)
             .RequireAuthorization()
             .WithName("Me")
@@ -63,6 +83,8 @@ public static class AuthEndpoints
         RegisterRequest request,
         UserManager<ApplicationUser> userManager,
         ApplicationDbContext dbContext,
+        ISecurityAuditService securityAuditService,
+        HttpContext httpContext,
         IDateTimeProvider dateTimeProvider)
     {
         if (!string.IsNullOrWhiteSpace(request.Role) && request.Role != ApplicationRoleNames.ClinicOwner)
@@ -93,6 +115,14 @@ public static class AuthEndpoints
             TimeSpan.FromDays(2),
             dateTimeProvider,
             dbContext);
+
+        await securityAuditService.RecordAsync(CreateSecurityAuditEntry(
+            httpContext,
+            user.TenantId,
+            user.Id,
+            "auth.registered",
+            user.Email ?? request.Email,
+            """{"role":"Clinic Owner"}"""));
 
         return Results.Created($"/api/auth/users/{user.Id}", new RegisterResponse(
             user.Id,
@@ -136,6 +166,8 @@ public static class AuthEndpoints
         ApplicationDbContext dbContext,
         IJwtTokenService jwtTokenService,
         IOptions<JwtOptions> jwtOptions,
+        ISecurityAuditService securityAuditService,
+        HttpContext httpContext,
         IDateTimeProvider dateTimeProvider)
     {
         var user = await userManager.FindByEmailAsync(request.Email.Trim());
@@ -143,21 +175,64 @@ public static class AuthEndpoints
             || !user.IsActive
             || !await userManager.CheckPasswordAsync(user, request.Password))
         {
+            await securityAuditService.RecordAsync(CreateSecurityAuditEntry(
+                httpContext,
+                user?.TenantId,
+                user?.Id,
+                "auth.login_failed",
+                request.Email.Trim(),
+                """{"reason":"invalid_credentials"}"""));
             return Results.Unauthorized();
         }
 
         if (!user.EmailConfirmed)
         {
+            await securityAuditService.RecordAsync(CreateSecurityAuditEntry(
+                httpContext,
+                user.TenantId,
+                user.Id,
+                "auth.login_failed",
+                user.Email ?? request.Email,
+                """{"reason":"email_not_confirmed"}"""));
             return Results.Unauthorized();
         }
 
-        return Results.Ok(await CreateAuthResponseAsync(
+        if (user.TwoFactorEnabled)
+        {
+            if (string.IsNullOrWhiteSpace(request.MfaCode)
+                || !await userManager.VerifyTwoFactorTokenAsync(
+                    user,
+                    TokenOptions.DefaultAuthenticatorProvider,
+                    NormalizeMfaCode(request.MfaCode)))
+            {
+                await securityAuditService.RecordAsync(CreateSecurityAuditEntry(
+                    httpContext,
+                    user.TenantId,
+                    user.Id,
+                    "auth.mfa_failed",
+                    user.Email ?? request.Email,
+                    """{"reason":"invalid_or_missing_code"}"""));
+                return Results.Unauthorized();
+            }
+        }
+
+        var response = await CreateAuthResponseAsync(
             user,
             userManager,
             dbContext,
             jwtTokenService,
             jwtOptions.Value,
-            dateTimeProvider.UtcNow));
+            dateTimeProvider.UtcNow);
+
+        await securityAuditService.RecordAsync(CreateSecurityAuditEntry(
+            httpContext,
+            user.TenantId,
+            user.Id,
+            "auth.login_succeeded",
+            user.Email ?? request.Email,
+            user.TwoFactorEnabled ? """{"mfa":true}""" : """{"mfa":false}"""));
+
+        return Results.Ok(response);
     }
 
     private static async Task<IResult> RefreshAsync(
@@ -283,6 +358,115 @@ public static class AuthEndpoints
         return Results.Ok(new { message = "Logged out." });
     }
 
+    private static async Task<IResult> SetupMfaAsync(
+        ClaimsPrincipal principal,
+        UserManager<ApplicationUser> userManager,
+        ISecurityAuditService securityAuditService,
+        HttpContext httpContext)
+    {
+        var user = await GetCurrentUserAsync(principal, userManager);
+        if (user is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var key = await userManager.GetAuthenticatorKeyAsync(user);
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            await userManager.ResetAuthenticatorKeyAsync(user);
+            key = await userManager.GetAuthenticatorKeyAsync(user);
+        }
+
+        await securityAuditService.RecordAsync(CreateSecurityAuditEntry(
+            httpContext,
+            user.TenantId,
+            user.Id,
+            "auth.mfa_setup_started",
+            user.Email ?? user.Id.ToString()));
+
+        return Results.Ok(new MfaSetupResponse(
+            key ?? string.Empty,
+            BuildAuthenticatorUri(user.Email ?? user.UserName ?? user.Id.ToString(), key ?? string.Empty),
+            user.TwoFactorEnabled));
+    }
+
+    private static async Task<IResult> EnableMfaAsync(
+        MfaCodeRequest request,
+        ClaimsPrincipal principal,
+        UserManager<ApplicationUser> userManager,
+        ISecurityAuditService securityAuditService,
+        HttpContext httpContext)
+    {
+        var user = await GetCurrentUserAsync(principal, userManager);
+        if (user is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var isValid = await userManager.VerifyTwoFactorTokenAsync(
+            user,
+            TokenOptions.DefaultAuthenticatorProvider,
+            NormalizeMfaCode(request.Code));
+        if (!isValid)
+        {
+            await securityAuditService.RecordAsync(CreateSecurityAuditEntry(
+                httpContext,
+                user.TenantId,
+                user.Id,
+                "auth.mfa_enable_failed",
+                user.Email ?? user.Id.ToString()));
+            return Results.BadRequest(new { message = "Invalid MFA code." });
+        }
+
+        await userManager.SetTwoFactorEnabledAsync(user, true);
+        var recoveryCodes = await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+        await securityAuditService.RecordAsync(CreateSecurityAuditEntry(
+            httpContext,
+            user.TenantId,
+            user.Id,
+            "auth.mfa_enabled",
+            user.Email ?? user.Id.ToString()));
+
+        return Results.Ok(new MfaEnabledResponse(recoveryCodes?.ToArray() ?? []));
+    }
+
+    private static async Task<IResult> DisableMfaAsync(
+        MfaCodeRequest request,
+        ClaimsPrincipal principal,
+        UserManager<ApplicationUser> userManager,
+        ISecurityAuditService securityAuditService,
+        HttpContext httpContext)
+    {
+        var user = await GetCurrentUserAsync(principal, userManager);
+        if (user is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (user.TwoFactorEnabled)
+        {
+            var isValid = await userManager.VerifyTwoFactorTokenAsync(
+                user,
+                TokenOptions.DefaultAuthenticatorProvider,
+                NormalizeMfaCode(request.Code));
+            if (!isValid)
+            {
+                return Results.BadRequest(new { message = "Invalid MFA code." });
+            }
+        }
+
+        await userManager.SetTwoFactorEnabledAsync(user, false);
+        await userManager.ResetAuthenticatorKeyAsync(user);
+        await securityAuditService.RecordAsync(CreateSecurityAuditEntry(
+            httpContext,
+            user.TenantId,
+            user.Id,
+            "auth.mfa_disabled",
+            user.Email ?? user.Id.ToString()));
+
+        return Results.Ok(new { message = "MFA disabled." });
+    }
+
     private static async Task<IResult> MeAsync(
         ClaimsPrincipal principal,
         UserManager<ApplicationUser> userManager,
@@ -310,6 +494,37 @@ public static class AuthEndpoints
             roles.ToArray(),
             permissions));
     }
+
+    private static async Task<ApplicationUser?> GetCurrentUserAsync(
+        ClaimsPrincipal principal,
+        UserManager<ApplicationUser> userManager)
+    {
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        return userId is null ? null : await userManager.FindByIdAsync(userId);
+    }
+
+    private static SecurityAuditEntry CreateSecurityAuditEntry(
+        HttpContext httpContext,
+        Guid? tenantId,
+        Guid? userId,
+        string eventType,
+        string subject,
+        string detailsJson = "{}") =>
+        new(
+            tenantId,
+            userId,
+            eventType,
+            subject,
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
+            httpContext.Request.Headers.UserAgent.ToString(),
+            detailsJson);
+
+    private static string NormalizeMfaCode(string code) =>
+        code.Replace(" ", string.Empty, StringComparison.Ordinal)
+            .Replace("-", string.Empty, StringComparison.Ordinal);
+
+    private static string BuildAuthenticatorUri(string email, string key) =>
+        $"otpauth://totp/{Uri.EscapeDataString("Clinic Management SaaS")}:{Uri.EscapeDataString(email)}?secret={Uri.EscapeDataString(key)}&issuer={Uri.EscapeDataString("Clinic Management SaaS")}&digits=6";
 
     private static async Task<AuthResponse> CreateAuthResponseAsync(
         ApplicationUser user,
@@ -418,12 +633,15 @@ public static class AuthEndpoints
     private sealed record RegisterRequest(string Email, string Password, string DisplayName, Guid? TenantId, string? Role);
     private sealed record RegisterResponse(Guid UserId, string Email, string EmailVerificationToken);
     private sealed record ConfirmEmailRequest(Guid UserId, string Token);
-    private sealed record LoginRequest(string Email, string Password);
+    private sealed record LoginRequest(string Email, string Password, string? MfaCode = null);
     private sealed record RefreshRequest(string AccessToken, string RefreshToken);
     private sealed record ForgotPasswordRequest(string Email);
     private sealed record ForgotPasswordResponse(string? ResetToken);
     private sealed record ResetPasswordRequest(string Email, string Token, string NewPassword);
     private sealed record LogoutRequest(string RefreshToken);
+    private sealed record MfaCodeRequest(string Code);
+    private sealed record MfaSetupResponse(string SharedKey, string AuthenticatorUri, bool IsEnabled);
+    private sealed record MfaEnabledResponse(string[] RecoveryCodes);
     private sealed record AuthResponse(string AccessToken, string RefreshToken, DateTimeOffset ExpiresAtUtc, UserProfileResponse User);
     private sealed record UserProfileResponse(
         Guid Id,

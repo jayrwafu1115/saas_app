@@ -22,6 +22,8 @@ public sealed class PatientConfiguration : IEntityTypeConfiguration<Patient>
 
         builder.HasIndex(patient => new { patient.TenantId, patient.MedicalRecordNumber })
             .IsUnique();
+        builder.HasIndex(patient => new { patient.TenantId, patient.LastName, patient.FirstName });
+        builder.HasIndex(patient => new { patient.TenantId, patient.CreatedAtUtc });
 
         builder.HasOne<Clinic.Domain.Tenants.Tenant>()
             .WithMany()

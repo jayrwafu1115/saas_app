@@ -5,6 +5,7 @@ using Clinic.Domain.Billing;
 using Clinic.Domain.Clinical;
 using Clinic.Domain.Common;
 using Clinic.Domain.Patients;
+using Clinic.Domain.Security;
 using Clinic.Domain.Tenants;
 using Clinic.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -35,6 +36,7 @@ public sealed class ApplicationDbContext(
     public DbSet<TenantSubscription> TenantSubscriptions => Set<TenantSubscription>();
     public DbSet<SubscriptionUsage> SubscriptionUsages => Set<SubscriptionUsage>();
     public DbSet<BillingPayment> BillingPayments => Set<BillingPayment>();
+    public DbSet<SecurityAuditLog> SecurityAuditLogs => Set<SecurityAuditLog>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<ApplicationRolePermission> RolePermissions => Set<ApplicationRolePermission>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();

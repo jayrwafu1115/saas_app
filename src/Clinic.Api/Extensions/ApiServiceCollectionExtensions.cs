@@ -1,9 +1,11 @@
+using System.Threading.RateLimiting;
 using System.Text;
 using Clinic.Api.Options;
 using Clinic.Application.Common.Interfaces;
 using Clinic.Application.Common.Security;
 using Clinic.Domain.Users;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -19,6 +21,7 @@ public static class ApiServiceCollectionExtensions
         services.AddScoped<ICurrentTenant>(provider => provider.GetRequiredService<TenantContextService>());
         services.AddScoped<ITenantResolver, HeaderTenantResolver>();
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+        services.Configure<IpRestrictionOptions>(configuration.GetSection(IpRestrictionOptions.SectionName));
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {
@@ -91,6 +94,28 @@ public static class ApiServiceCollectionExtensions
         });
 
         services.AddHealthChecks();
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddFixedWindowLimiter("auth", limiterOptions =>
+            {
+                limiterOptions.PermitLimit = 10;
+                limiterOptions.Window = TimeSpan.FromMinutes(1);
+                limiterOptions.QueueLimit = 0;
+                limiterOptions.AutoReplenishment = true;
+            });
+            options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+            {
+                var key = context.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+                return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 300,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                });
+            });
+        });
 
         return services;
     }

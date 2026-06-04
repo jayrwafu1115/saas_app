@@ -19,6 +19,8 @@ public sealed class EncounterConfiguration : IEntityTypeConfiguration<Encounter>
         builder.Property(encounter => encounter.Status).HasConversion<string>().HasMaxLength(40).IsRequired();
         builder.HasQueryFilter(encounter => !encounter.IsDeleted);
         builder.HasIndex(encounter => new { encounter.TenantId, encounter.PatientId, encounter.EncounterDateUtc });
+        builder.HasIndex(encounter => new { encounter.TenantId, encounter.ClinicianUserId, encounter.EncounterDateUtc });
+        builder.HasIndex(encounter => new { encounter.TenantId, encounter.Status, encounter.EncounterDateUtc });
         builder.HasMany(encounter => encounter.Vitals).WithOne().HasForeignKey(vital => vital.EncounterId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(encounter => encounter.Diagnoses).WithOne().HasForeignKey(diagnosis => diagnosis.EncounterId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(encounter => encounter.Prescriptions).WithOne().HasForeignKey(prescription => prescription.EncounterId).OnDelete(DeleteBehavior.Cascade);

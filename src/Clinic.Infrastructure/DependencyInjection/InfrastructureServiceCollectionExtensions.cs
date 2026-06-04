@@ -3,6 +3,7 @@ using Clinic.Application.AI;
 using Clinic.Application.Billing;
 using Clinic.Application.Clinical;
 using Clinic.Application.Common.Interfaces;
+using Clinic.Application.Common.Security;
 using Clinic.Application.Locations;
 using Clinic.Application.Patients;
 using Clinic.Application.Reporting;
@@ -14,6 +15,7 @@ using Clinic.Infrastructure.Identity;
 using Clinic.Infrastructure.Persistence;
 using Clinic.Infrastructure.Persistence.Repositories;
 using Clinic.Infrastructure.Reporting;
+using Clinic.Infrastructure.Security;
 using Clinic.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +56,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IReportingRepository, ReportingRepository>();
         services.AddScoped<IBillingRepository, BillingRepository>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<ISecurityAuditService, SecurityAuditService>();
         services.Configure<PhilippinesBillingOptions>(configuration.GetSection(PhilippinesBillingOptions.SectionName));
         services.AddScoped<IBillingProvider, GCashBillingProvider>();
         services.AddScoped<IBillingProvider, MayaBillingProvider>();
@@ -92,7 +95,8 @@ public static class InfrastructureServiceCollectionExtensions
                 options.SignIn.RequireConfirmedEmail = true;
             })
             .AddRoles<ApplicationRole>()
-            .AddEntityFrameworkStores<ApplicationDbContext>();
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddTokenProvider<AuthenticatorTokenProvider<ApplicationUser>>(TokenOptions.DefaultAuthenticatorProvider);
 
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 

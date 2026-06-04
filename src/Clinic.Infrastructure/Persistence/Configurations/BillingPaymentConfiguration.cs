@@ -16,6 +16,7 @@ public sealed class BillingPaymentConfiguration : IEntityTypeConfiguration<Billi
         builder.Property(payment => payment.ProviderReference).HasMaxLength(160).IsRequired();
         builder.Property(payment => payment.CheckoutUrl).HasMaxLength(1000).IsRequired();
         builder.HasIndex(payment => new { payment.TenantId, payment.CreatedAtUtc });
+        builder.HasIndex(payment => new { payment.TenantId, payment.Status, payment.CreatedAtUtc });
         builder.HasQueryFilter(payment => !payment.IsDeleted);
     }
 }
