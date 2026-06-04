@@ -1,27 +1,64 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8faf9;
-  --foreground: #1c1f1d;
+  --background: #f7faf9;
+  --foreground: #172033;
   --surface: #ffffff;
-  --muted: #eef1ee;
-  --muted-foreground: #66706a;
-  --border: #d9dfda;
+  --surface-raised: #ffffff;
+  --muted: #edf4f2;
+  --muted-foreground: #64748b;
+  --border: #d8e4e1;
   --accent: #0f766e;
-  --ring: #0f766e;
+  --accent-foreground: #ffffff;
+  --primary: #0f3f4a;
+  --primary-foreground: #ffffff;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #0284c7;
+  --ring: #14b8a6;
+  --shadow-soft: 0 12px 32px rgba(15, 63, 74, 0.08);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
   --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+.dark {
+  --background: #101918;
+  --foreground: #e5f2ef;
+  --surface: #142220;
+  --surface-raised: #192b28;
+  --muted: #1f3430;
+  --muted-foreground: #9fb8b2;
+  --border: #29423d;
+  --accent: #2dd4bf;
+  --accent-foreground: #062926;
+  --primary: #8ceee1;
+  --primary-foreground: #092523;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #38bdf8;
+  --ring: #5eead4;
+  --shadow-soft: 0 16px 42px rgba(0, 0, 0, 0.28);
 }
 
 * {
@@ -38,4 +75,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
